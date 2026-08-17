@@ -1,0 +1,6 @@
+{
+  "name": "devin-mcp-cli",
+  "version": "0.1.0",
+  "description": "Skill for interacting with the Devin MCP server using the devin-mcp CLI",
+  "skills": "./skills/"
+}

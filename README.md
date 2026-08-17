@@ -14,20 +14,24 @@ The command set is generated from the live server, so it reflects whatever tools
 
 ## Installation
 
-Requires Python 3.11+.
+Requires Python 3.11+ and [uv](https://docs.astral.sh/uv/).
+
+There is no PyPI release or tagged version yet, so install from a local clone as an editable uv tool. The `devin-mcp` command lands on your PATH, and edits in the clone take effect with no reinstall.
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/fprochazka/devin-mcp-cli.git
 cd devin-mcp-cli
 
-# Install as a user tool (use -f to force reinstall)
-pipx install -f -e .
+# Install as an editable user tool (devin-mcp goes on your PATH)
+uv tool install --editable .
 
 # Then add an account
 devin-mcp org add work
 ```
 
-For development, use `uv`:
+To update later, pull the clone. To uninstall, run `uv tool uninstall devin-mcp-cli`.
+
+For development in the clone without installing, use `uv run`:
 
 ```bash
 uv sync
@@ -135,37 +139,27 @@ devin-mcp devin_session_search --limit 10 --json
 
 Array and object parameters are passed as JSON strings, for example `--tags '["a","b"]'`.
 
-## Claude Code Skill (optional)
+## Claude Code Plugin
 
-A skill teaches Claude how to use the `devin-mcp` CLI. It ships a Quick Reference plus per-topic references under `references/`.
-
-**Claude Code (CLI), global install:**
+This repository is also a [Claude Code](https://docs.anthropic.com/en/docs/claude-code) plugin marketplace. The plugin ships a skill that teaches Claude how to use the `devin-mcp` CLI.
 
 ```bash
-cp -r usage/claude-code-skill/devin-mcp-cli ~/.claude/skills/
+# Install the devin-mcp CLI first (see Installation above)
+uv tool install --editable .
+
+# Add the marketplace and install the plugin
+claude plugin marketplace add fprochazka/devin-mcp-cli
+claude plugin install devin-mcp-cli@fprochazka-devin-mcp-cli
 ```
 
-**Claude Code (CLI), project install:**
+To upgrade after new commits land:
 
 ```bash
-mkdir -p .claude/skills
-cp -r usage/claude-code-skill/devin-mcp-cli .claude/skills/
+claude plugin marketplace update fprochazka-devin-mcp-cli
+claude plugin update devin-mcp-cli@fprochazka-devin-mcp-cli
 ```
 
-**Claude.ai or Claude Desktop:** upload the packaged `devin-mcp-cli.skill` file through Settings > Capabilities > Skills.
-
-To skip approval prompts for read-only calls, add to `~/.claude/settings.json`:
-
-```json
-{
-  "permissions": {
-    "allow": [
-      "Skill(devin-mcp-cli)",
-      "Bash(devin-mcp:*)"
-    ]
-  }
-}
-```
+Once installed, the skill auto-approves read-only commands (`config`, `org list`, `list_integrations`, `devin_session_search`, `devin_session_events`, the wiki/`ask_question` tools). Write operations (`devin_session_create`, `devin_session_interact`, the `*_manage` tools, `org add`/`use`/`remove`) still require manual approval.
 
 ## Caching
 
@@ -180,6 +174,11 @@ src/devin_mcp/
 ├── cli.py        # CLI with dynamic command generation and account commands
 ├── client.py     # MCP client with Bearer auth and optional X-Org-Id
 └── config.py     # Multi-account configuration and resolution
+
+.claude-plugin/marketplace.json                       # Claude Code plugin marketplace
+coding-agent-plugins/claude-code/                      # the plugin
+├── .claude-plugin/plugin.json
+└── skills/devin-mcp-cli/{SKILL.md, references/}       # the skill (single source)
 ```
 
 ## Development
@@ -189,6 +188,15 @@ uv sync
 uv run ruff check .
 uv run ruff format .
 ```
+
+## Releasing the plugin
+
+The plugin version lives in two files and must stay in lockstep. Bump both when you change the plugin:
+
+- `.claude-plugin/marketplace.json` (`plugins[0].version`)
+- `coding-agent-plugins/claude-code/.claude-plugin/plugin.json` (`version`)
+
+This version is independent of the Python package version in `pyproject.toml`.
 
 ## License
 

@@ -1,0 +1,20 @@
+{
+  "name": "fprochazka-devin-mcp-cli",
+  "description": "CLI for the official Devin MCP server, with a skill for Claude Code",
+  "owner": {
+    "name": "Filip Procházka"
+  },
+  "plugins": [
+    {
+      "name": "devin-mcp-cli",
+      "description": "Skill for interacting with the Devin MCP server using the devin-mcp CLI",
+      "version": "0.1.0",
+      "author": {
+        "name": "Filip Procházka",
+        "url": "https://github.com/fprochazka"
+      },
+      "source": "./coding-agent-plugins/claude-code",
+      "homepage": "https://github.com/fprochazka/devin-mcp-cli"
+    }
+  ]
+}

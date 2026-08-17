@@ -2,6 +2,7 @@
 name: devin-mcp-cli
 description: CLI for the official Devin MCP server (sessions, playbooks, knowledge, schedules, repos). Use when starting or replying to Devin sessions, searching sessions, managing playbooks or knowledge, scheduling runs, or exploring repos. Triggered by requests involving Devin, Cognition, agent sessions, or playbooks.
 trigger-keywords: devin, session, sessions, playbook, playbooks, knowledge, cognition, agent
+allowed-tools: Bash(devin-mcp --help), Bash(devin-mcp config:*), Bash(devin-mcp org list:*), Bash(devin-mcp list_integrations:*), Bash(devin-mcp list_available_repos:*), Bash(devin-mcp devin_session_search:*), Bash(devin-mcp devin_session_events:*), Bash(devin-mcp devin_session_gather:*), Bash(devin-mcp read_wiki_structure:*), Bash(devin-mcp read_wiki_contents:*), Bash(devin-mcp ask_question:*), Bash(devin-mcp find_setting:*)
 ---
 
 # Devin MCP CLI
