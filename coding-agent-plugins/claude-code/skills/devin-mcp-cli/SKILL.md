@@ -2,7 +2,7 @@
 name: devin-mcp-cli
 description: CLI for the official Devin MCP server (sessions, playbooks, knowledge, schedules, repos). Use when starting or replying to Devin sessions, searching sessions, managing playbooks or knowledge, scheduling runs, or exploring repos. Triggered by requests involving Devin, Cognition, agent sessions, or playbooks.
 trigger-keywords: devin, session, sessions, playbook, playbooks, knowledge, cognition, agent
-allowed-tools: Bash(devin-mcp --help), Bash(devin-mcp config:*), Bash(devin-mcp org list:*), Bash(devin-mcp list_integrations:*), Bash(devin-mcp list_available_repos:*), Bash(devin-mcp devin_session_search:*), Bash(devin-mcp devin_session_events:*), Bash(devin-mcp devin_session_gather:*), Bash(devin-mcp read_wiki_structure:*), Bash(devin-mcp read_wiki_contents:*), Bash(devin-mcp ask_question:*), Bash(devin-mcp find_setting:*)
+allowed-tools: Bash(devin-mcp --help), Bash(devin-mcp config:*), Bash(devin-mcp list_integrations:*), Bash(devin-mcp list_available_repos:*), Bash(devin-mcp devin_session_search:*), Bash(devin-mcp devin_session_events:*), Bash(devin-mcp devin_session_gather:*), Bash(devin-mcp read_wiki_structure:*), Bash(devin-mcp read_wiki_contents:*), Bash(devin-mcp ask_question:*), Bash(devin-mcp find_setting:*)
 ---
 
 # Devin MCP CLI
@@ -35,19 +35,9 @@ Do not assume a flag exists. Read `devin-mcp <command> --help` for the current o
 | Discover integrations and available repos | `list_integrations`, `list_available_repos` | [repos.md](references/repos.md) |
 | Read a repo's wiki / docs, ask a question | `read_wiki_structure`, `read_wiki_contents`, `ask_question` | [repos.md](references/repos.md) |
 
-## Accounts and org-id
+## Accounts
 
-The CLI holds several named accounts. Two separate ideas:
-
-- The account **alias** (`work`, `personal`) is a local nickname. Select it with `--org <name>` or `DEVIN_ORG`.
-- The `org_id` is the Devin organization UUID, sent as the `X-Org-Id` header, and stored per account. It is separate from the alias.
-
-```bash
-devin-mcp org list                       # see accounts and which is default
-devin-mcp --org personal <command> ...   # run one command as another account
-```
-
-Selection precedence: `--org` / `DEVIN_ORG` > `default_org` > sole account > `DEVIN_API_KEY` env fallback > error.
+The user configures accounts (see the project README). To run one command against a non-default account, add `--org <name>`.
 
 ## Output
 

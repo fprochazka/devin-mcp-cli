@@ -8,7 +8,7 @@
     {
       "name": "devin-mcp-cli",
       "description": "Skill for interacting with the Devin MCP server using the devin-mcp CLI",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"
