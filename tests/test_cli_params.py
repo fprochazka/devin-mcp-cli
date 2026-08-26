@@ -3,7 +3,7 @@
 import click
 import pytest
 
-from devin_mcp.cli import parse_value, resolve_schema_type
+from devin_mcp.cli import is_transport_error_content, parse_value, resolve_schema_type
 
 
 @pytest.mark.parametrize(
@@ -46,3 +46,16 @@ def test_parse_value(value: str, json_type: str, expected: object) -> None:
 def test_parse_value_rejects_broken_json(value: str, json_type: str) -> None:
     with pytest.raises(click.BadParameter):
         parse_value(value, json_type)
+
+
+@pytest.mark.parametrize(
+    ("output", "expected"),
+    [
+        ("Error: HTTP 403 Forbidden for GET https://api.example.com/v1/sessions: Unauthorized", True),
+        ('{"session_id": "devin-0000000000000000000000000000abcd"}', False),
+        ("Error: something else", False),
+        ("", False),
+    ],
+)
+def test_is_transport_error_content(output: str, expected: bool) -> None:
+    assert is_transport_error_content(output) is expected

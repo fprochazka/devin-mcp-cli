@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -213,6 +214,19 @@ def parse_value(value: str, json_type: str | list | None) -> Any:
     return value
 
 
+_HTTP_ERROR_CONTENT = re.compile(r"^Error: HTTP \d{3}\b")
+
+
+def is_transport_error_content(output: str) -> bool:
+    """Report whether a tool result is really a transport failure.
+
+    The Devin MCP server returns a non-2xx backing-API response as plain text
+    content with ``isError`` false. The match is anchored and needs a status
+    code, so a normal JSON result cannot trigger it.
+    """
+    return bool(_HTTP_ERROR_CONTENT.match(output.strip()))
+
+
 class DynamicGroup(click.Group):
     """A Click group that dynamically loads commands from MCP tools."""
 
@@ -377,6 +391,10 @@ class DynamicGroup(click.Group):
                     sys.exit(1)
 
                 output = format_tool_result(result)
+
+                if is_transport_error_content(output):
+                    error_console.print(output, markup=False)
+                    sys.exit(1)
 
                 if as_json:
                     print(output)  # Use plain print to avoid Rich's text wrapping
