@@ -158,23 +158,50 @@ def json_type_to_click_type(json_type: str | list | None) -> click.ParamType:
     return type_map.get(json_type, click.STRING)
 
 
+def resolve_schema_type(prop_def: dict[str, Any]) -> str | None:
+    """Resolve the effective JSON schema type of a property.
+
+    Pydantic v2 emits an optional field as ``anyOf: [{...}, {"type": "null"}]``
+    with no top-level ``type``. Take the first non-null branch, so an optional
+    array or object parameter keeps its type.
+    """
+    direct = prop_def.get("type")
+    if isinstance(direct, list):
+        non_null = [t for t in direct if t != "null"]
+        return non_null[0] if non_null else None
+    if isinstance(direct, str) and direct != "null":
+        return direct
+
+    for key in ("anyOf", "oneOf"):
+        for member in prop_def.get(key) or []:
+            if isinstance(member, dict):
+                member_type = resolve_schema_type(member)
+                if member_type is not None:
+                    return member_type
+    return None
+
+
 def parse_value(value: str, json_type: str | list | None) -> Any:
     """Parse a string value according to JSON schema type."""
     if value is None:
         return None
-
-    # Handle arrays and objects - parse as JSON
-    if isinstance(json_type, str) and json_type in ("array", "object"):
-        try:
-            return json.loads(value)
-        except json.JSONDecodeError:
-            return value
 
     # Handle nullable types
     if isinstance(json_type, list):
         non_null_types = [t for t in json_type if t != "null"]
         if non_null_types:
             json_type = non_null_types[0]
+
+    # Handle arrays and objects - parse as JSON
+    if isinstance(json_type, str) and json_type in ("array", "object"):
+        stripped = value.strip()
+        if stripped.startswith(("[", "{")) or json_type == "object":
+            try:
+                return json.loads(stripped)
+            except json.JSONDecodeError as exc:
+                raise click.BadParameter(f"expected a JSON {json_type}: {exc}") from exc
+        # A bare scalar is the convenience form for a one-element array.
+        return [value]
 
     if json_type == "boolean":
         return value.lower() in ("true", "1", "yes")
@@ -264,7 +291,7 @@ class DynamicGroup(click.Group):
         param_name_map = {}
 
         for prop_name, prop_def in properties.items():
-            prop_type = prop_def.get("type")
+            prop_type = resolve_schema_type(prop_def)
             prop_desc = prop_def.get("description", "")
             default = prop_def.get("default")
             is_required = prop_name in required
@@ -316,7 +343,7 @@ class DynamicGroup(click.Group):
                     if value is not None:
                         # Map Click's lowercased param name back to original MCP property name
                         original_key = name_map.get(key, key)
-                        prop_type = prop_defs.get(original_key, {}).get("type")
+                        prop_type = resolve_schema_type(prop_defs.get(original_key) or {})
                         if prop_type in ("array", "object"):
                             arguments[original_key] = parse_value(str(value), prop_type)
                         else:
