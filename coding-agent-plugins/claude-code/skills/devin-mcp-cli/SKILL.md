@@ -26,9 +26,10 @@ Do not assume a flag exists. Read `devin-mcp <command> --help` for the current o
 |--------|---------|-----------|
 | Start a new Devin session from a prompt | `devin_session_create` | [sessions.md](references/sessions.md) |
 | List / search existing sessions | `devin_session_search` | [sessions.md](references/sessions.md) |
-| Reply into a running session (as me) | `devin_session_interact` | [sessions.md](references/sessions.md) |
-| Read a session's events / timeline | `devin_session_events` | [sessions.md](references/sessions.md) |
-| Gather a session's outputs / results | `devin_session_gather` | [sessions.md](references/sessions.md) |
+| Read a finished session (metadata, structured output, messages) | `devin_session_interact --action get` / `--action get_messages` | [sessions.md](references/sessions.md) |
+| Reply into a running session (as me) | `devin_session_interact --action message` | [sessions.md](references/sessions.md) |
+| Read a session's events / timeline | `devin_session_events --action list` | [sessions.md](references/sessions.md) |
+| Block until multiple sessions finish (polling wait) | `devin_session_gather` | [sessions.md](references/sessions.md) |
 | List / get / create / update playbooks | `devin_playbook_manage` | [playbooks.md](references/playbooks.md) |
 | List / get / create / update knowledge notes | `devin_knowledge_manage` | [knowledge.md](references/knowledge.md) |
 | List / get / create / update scheduled runs | `devin_schedule_manage` | [schedules.md](references/schedules.md) |
