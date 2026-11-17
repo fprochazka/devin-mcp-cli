@@ -189,6 +189,17 @@ uv run ruff check .
 uv run ruff format .
 ```
 
+### Commit hooks
+
+Configs, test fixtures and captured output can carry private identifiers such as account aliases, organization IDs, session names or paths. `scripts/hooks` holds a pre-commit and a commit-msg hook that refuse a commit when a staged line or the commit message matches a private identifier. The identifiers live in a file outside the repository, because listing them here would publish the very strings the hooks exist to keep out. Set it up once per clone:
+
+```bash
+git config core.hooksPath scripts/hooks
+git config hooks.forbiddenPatternsFile ~/.config/git/forbidden-patterns.txt  # any path outside the repo
+```
+
+The file holds one extended regex per line, matched case-insensitively; blank lines and `#` comments are ignored. Until `hooks.forbiddenPatternsFile` points at a file with at least one pattern, both hooks refuse every commit and print how to fix it. The hooks check only the lines a commit adds.
+
 ## Releasing the plugin
 
 The plugin version lives in two files and must stay in lockstep. Bump both when you change the plugin:
