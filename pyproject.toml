@@ -5,7 +5,7 @@ description = "CLI wrapper for Devin MCP Server"
 authors = [
     {name = "Filip Prochazka"}
 ]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "mcp>=1.25.0,<2.0.0",
     "click>=8.3.1,<9.0.0",
@@ -27,7 +27,7 @@ packages = ["src/devin_mcp"]
 
 [tool.ruff]
 line-length = 120
-target-version = "py311"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "C4", "SIM"]

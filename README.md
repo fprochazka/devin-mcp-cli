@@ -14,7 +14,7 @@ The command set is generated from the live server, so it reflects whatever tools
 
 ## Installation
 
-Requires Python 3.11+ and [uv](https://docs.astral.sh/uv/).
+Requires Python 3.12+ and [uv](https://docs.astral.sh/uv/).
 
 There is no PyPI release or tagged version yet, so install from a local clone as an editable uv tool. The `devin-mcp` command lands on your PATH, and edits in the clone take effect with no reinstall.
 
