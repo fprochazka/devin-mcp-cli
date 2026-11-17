@@ -186,8 +186,12 @@ coding-agent-plugins/claude-code/                      # the plugin
 ```bash
 uv sync
 uv run ruff check .
-uv run ruff format .
+uv run ruff format --check .
+uv run mypy
+uv run pytest
 ```
+
+CI runs the same checks on every push to master and on pull requests, with the tests on Python 3.12 to 3.15. `uv run ruff format .` fixes the formatting.
 
 ### Commit hooks
 
