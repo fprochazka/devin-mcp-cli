@@ -8,6 +8,7 @@ the ``X-Org-Id`` header for key types that need it.
 
 import os
 from pathlib import Path
+from typing import Any
 
 import yaml
 from pydantic import BaseModel, Field
@@ -123,7 +124,7 @@ def get_config_path() -> Path:
     return config_dir / "config.yaml"
 
 
-def read_config_dict(config_path: Path | None = None) -> dict:
+def read_config_dict(config_path: Path | None = None) -> dict[str, Any]:
     """Read the raw config YAML into a dict, or an empty dict if absent."""
     if config_path is None:
         config_path = get_config_path()
@@ -167,7 +168,7 @@ def load_config(config_path: Path | None = None) -> Config:
     )
 
 
-def save_config(config_path: Path, data: dict) -> None:
+def save_config(config_path: Path, data: dict[str, Any]) -> None:
     """Write the config dict to YAML and lock the file to the owner.
 
     The file holds plaintext secrets, so the mode is set to 0600.

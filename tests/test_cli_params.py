@@ -1,5 +1,7 @@
 """Tests for the pure schema/value helpers used by the dynamic CLI commands."""
 
+from typing import Any
+
 import click
 import pytest
 
@@ -18,7 +20,7 @@ from devin_mcp.cli import is_transport_error_content, parse_value, resolve_schem
         ({"type": ["null"]}, None),
     ],
 )
-def test_resolve_schema_type(prop_def: dict, expected: str | None) -> None:
+def test_resolve_schema_type(prop_def: dict[str, Any], expected: str | None) -> None:
     assert resolve_schema_type(prop_def) == expected
 
 

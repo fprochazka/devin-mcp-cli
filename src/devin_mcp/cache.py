@@ -31,7 +31,8 @@ def load_from_cache() -> list[dict[str, Any]] | None:
         if time.time() - cached_at > CACHE_TTL:
             return None
 
-        return cache_data.get("tools", [])
+        tools: list[dict[str, Any]] = cache_data.get("tools", [])
+        return tools
     except (json.JSONDecodeError, OSError):
         return None
 

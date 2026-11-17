@@ -6,11 +6,13 @@ import logging
 import os
 import re
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
 import click
 import httpx
+from mcp.types import CallToolResult
 from rich.console import Console
 from rich.json import JSON
 from rich.panel import Panel
@@ -137,7 +139,8 @@ def resolve_org(ctx: click.Context) -> OrgConfig:
     return config.get_org(org_name)
 
 
-def json_type_to_click_type(json_type: str | list | None) -> click.ParamType:
+# Quoted, because click before 8.5 cannot subscript ParamType at runtime.
+def json_type_to_click_type(json_type: str | list[str] | None) -> "click.ParamType[Any]":
     """Convert JSON schema type to Click type."""
     if json_type is None:
         return click.STRING
@@ -182,7 +185,7 @@ def resolve_schema_type(prop_def: dict[str, Any]) -> str | None:
     return None
 
 
-def parse_value(value: str, json_type: str | list | None) -> Any:
+def parse_value(value: str, json_type: str | list[str] | None) -> Any:
     """Parse a string value according to JSON schema type."""
     if value is None:
         return None
@@ -232,7 +235,7 @@ class DynamicGroup(click.Group):
 
     STATIC_COMMANDS = {"init", "config", "org"}
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._tools_cache: dict[str, Any] | None = None
 
@@ -296,7 +299,7 @@ class DynamicGroup(click.Group):
 
     def _create_tool_command(self, tool: dict[str, Any]) -> click.Command:
         """Create a Click command from an MCP tool dict."""
-        params = []
+        params: list[click.Parameter] = []
         schema = tool.get("inputSchema") or {}
         properties = schema.get("properties", {})
         required = set(schema.get("required", []))
@@ -345,9 +348,9 @@ class DynamicGroup(click.Group):
             )
         )
 
-        def make_callback(tool_name: str, prop_defs: dict, name_map: dict):
+        def make_callback(tool_name: str, prop_defs: dict[str, Any], name_map: dict[str, str]) -> Callable[..., None]:
             @click.pass_context
-            def callback(ctx: click.Context, **kwargs):
+            def callback(ctx: click.Context, /, **kwargs: Any) -> None:
                 as_json = kwargs.pop("as_json", False)
                 verbose = ctx.obj.get("verbose", False) if ctx.obj else False
 
@@ -371,7 +374,7 @@ class DynamicGroup(click.Group):
                     error_console.print(f"[red]{e}[/red]")
                     sys.exit(1)
 
-                async def _call():
+                async def _call() -> CallToolResult:
                     client = DevinMcpClient(org, config.mcp_server)
                     async with client.connect():
                         return await client.call_tool(tool_name, arguments)
@@ -440,7 +443,7 @@ class DynamicGroup(click.Group):
     help="Enable debug logging and show full tracebacks on error",
 )
 @click.pass_context
-def cli(ctx: click.Context, config_path: Path | None, org_name: str | None, verbose: bool):
+def cli(ctx: click.Context, config_path: Path | None, org_name: str | None, verbose: bool) -> None:
     """Devin MCP CLI - Query Devin using the MCP Server.
 
     Each Devin MCP tool is exposed as a CLI command. The command list comes from
@@ -483,13 +486,13 @@ def _add_org(config_path: Path, name: str, api_key: str, org_id: str | None) -> 
 
 @cli.command("init")
 @click.pass_context
-def init_config(ctx: click.Context):
+def init_config(ctx: click.Context) -> None:
     """Add a first account (shortcut for 'org add')."""
     ctx.invoke(org_add, name=None, api_key=None, org_id=None)
 
 
 @cli.group("org")
-def org_group():
+def org_group() -> None:
     """Manage named accounts (aliases) in the config file."""
 
 
@@ -498,7 +501,7 @@ def org_group():
 @click.option("--api-key", help="Devin API key (cog_...). Prompted if omitted.")
 @click.option("--org-id", help="Devin organization UUID for X-Org-Id (optional).")
 @click.pass_context
-def org_add(ctx: click.Context, name: str | None, api_key: str | None, org_id: str | None):
+def org_add(ctx: click.Context, name: str | None, api_key: str | None, org_id: str | None) -> None:
     """Add or replace one account, merging into the existing config."""
     config_path = resolve_config_path(ctx)
 
@@ -525,7 +528,7 @@ def org_add(ctx: click.Context, name: str | None, api_key: str | None, org_id: s
 
 @org_group.command("list")
 @click.pass_context
-def org_list(ctx: click.Context):
+def org_list(ctx: click.Context) -> None:
     """List configured accounts with masked keys."""
     config_path = resolve_config_path(ctx)
     try:
@@ -571,7 +574,7 @@ def org_list(ctx: click.Context):
 @org_group.command("use")
 @click.argument("name")
 @click.pass_context
-def org_use(ctx: click.Context, name: str):
+def org_use(ctx: click.Context, name: str) -> None:
     """Set the default account, preserving everything else."""
     config_path = resolve_config_path(ctx)
     data = read_config_dict(config_path)
@@ -590,7 +593,7 @@ def org_use(ctx: click.Context, name: str):
 @org_group.command("remove")
 @click.argument("name")
 @click.pass_context
-def org_remove(ctx: click.Context, name: str):
+def org_remove(ctx: click.Context, name: str) -> None:
     """Remove one account. Repoints the default if needed."""
     config_path = resolve_config_path(ctx)
     data = read_config_dict(config_path)
@@ -616,7 +619,7 @@ def org_remove(ctx: click.Context, name: str):
 
 @cli.command("config")
 @click.pass_context
-def show_config(ctx: click.Context):
+def show_config(ctx: click.Context) -> None:
     """Show the resolved active account (with the key masked)."""
     config_path = resolve_config_path(ctx)
     try:
@@ -649,7 +652,7 @@ def show_config(ctx: click.Context):
     console.print(f"\n[dim]Config file: {config_path}[/dim]")
 
 
-def main():
+def main() -> None:
     """Main entry point."""
     cli(obj={})
 

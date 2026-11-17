@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -34,7 +35,7 @@ class DevinMcpClient:
         return headers
 
     @asynccontextmanager
-    async def connect(self):
+    async def connect(self) -> AsyncIterator[ClientSession]:
         """Connect to the MCP server and yield a session."""
         headers = self._get_headers()
 
@@ -128,7 +129,7 @@ def get_tools(org: OrgConfig, server: McpServerConfig | None = None) -> list[dic
         return cached
 
     # Fetch from MCP server
-    async def _fetch():
+    async def _fetch() -> list[Tool]:
         client = DevinMcpClient(org, server)
         async with client.connect():
             return await client.list_tools()
