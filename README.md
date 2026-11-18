@@ -183,7 +183,7 @@ claude plugin marketplace update fprochazka-devin-mcp-cli
 claude plugin update devin-mcp-cli@fprochazka-devin-mcp-cli
 ```
 
-Once installed, the skill auto-approves read-only commands (`config`, `org list`, `list_integrations`, `devin_session_search`, `devin_session_events`, the wiki/`ask_question` tools). Write operations (`devin_session_create`, `devin_session_interact`, the `*_manage` tools, `org add`/`use`/`remove`) still require manual approval.
+Once installed, the skill auto-approves read-only commands under both the new and the old names (`config`, `org list`, `schema`, `session-search`, `session-events`, `list-integrations`, the wiki tools, and `--help` of any tool). Write operations (`session-create`, `session-interact`, the `*-manage` tools, `org add`/`use`/`remove`) still require manual approval.
 
 ## Caching
 

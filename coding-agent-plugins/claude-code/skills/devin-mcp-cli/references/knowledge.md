@@ -1,28 +1,24 @@
 # Knowledge Reference
 
-Knowledge notes give Devin persistent context (conventions, facts, how a codebase works). One tool manages them.
+Knowledge notes give Devin persistent context (conventions, facts, how a codebase works). One tool manages them through `--action`: `list`, `get`, `create`, `update`, `delete`, `folders`, and the suggestion actions `list_suggestions`, `view_suggestion`, `dismiss_suggestions`.
 
-Confirm the exact action names and options with `devin-mcp devin_knowledge_manage --help`.
+Confirm the exact options with `devin-mcp knowledge-manage --help`.
 
-## devin_knowledge_manage
-
-List, get, create, or update knowledge notes.
+## knowledge-manage
 
 ```bash
-# List knowledge notes
-devin-mcp devin_knowledge_manage --action list
+# List knowledge notes, optionally filtered
+devin-mcp knowledge-manage --action list --search deploy
 
 # Get one note
-devin-mcp devin_knowledge_manage --action get --id <note-id>
+devin-mcp knowledge-manage --action get --note-id <note-id>
 
-# Create a note (write the body to a file first)
-devin-mcp devin_knowledge_manage --action create \
-  --title "Deploy process" \
-  --body "$(cat /tmp/note.md)"
+# Create a note (write the content to a file first); --trigger says when Devin should recall it
+devin-mcp knowledge-manage --action create --name "Deploy process" \
+  --trigger "When deploying the backend" --arg-file content=/tmp/note.md
 
 # Update a note
-devin-mcp devin_knowledge_manage --action update --id <note-id> \
-  --body "$(cat /tmp/note.md)"
+devin-mcp knowledge-manage --action update --note-id <note-id> --arg-file content=/tmp/note.md
 ```
 
-Use the content-preparation workflow for the body.
+Use the content-preparation workflow for the content. `--body` is a deprecated alias of `--content`.
