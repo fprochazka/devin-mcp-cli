@@ -131,10 +131,10 @@ devin-mcp --help
 devin-mcp devin_session_search --help
 
 # Call a tool
-devin-mcp devin_session_search --limit 10
+devin-mcp devin_session_search --first 10
 
 # Raw JSON output
-devin-mcp devin_session_search --limit 10 --json
+devin-mcp devin_session_search --first 10 --json
 ```
 
 Array and object parameters are passed as JSON strings, for example `--tags '["a","b"]'`.
