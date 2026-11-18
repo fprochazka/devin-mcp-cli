@@ -1,18 +1,14 @@
 [project]
 name = "devin-mcp-cli"
-version = "0.1.0"
-description = "CLI wrapper for Devin MCP Server"
+version = "0.2.0"
+description = "CLI for the tools of the Devin MCP server"
 authors = [
     {name = "Filip Prochazka"}
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "mcp>=1.25.0,<2.0.0",
+    "mcp-to-cli-kit>=0.6.0,<0.7",
     "click>=8.3.1,<9.0.0",
-    "httpx>=0.28.1,<0.29.0",
-    "pyyaml>=6.0.3,<7.0.0",
-    "rich>=14.2.0,<15.0.0",
-    "pydantic>=2.0.0,<3.0.0",
 ]
 
 [project.scripts]
@@ -49,5 +45,4 @@ dev = [
     "mypy>=1.15",
     "pytest>=8.0.0,<9.0.0",
     "ruff>=0.14.10,<0.15.0",
-    "types-pyyaml>=6.0",
 ]

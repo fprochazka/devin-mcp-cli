@@ -1,3 +1,3 @@
-"""Devin MCP CLI - A CLI wrapper for the Devin MCP Server."""
+"""Devin MCP CLI: the tools of the Devin MCP server as commands."""
 
-__version__ = "0.1.0"
+DISTRIBUTION = "devin-mcp-cli"

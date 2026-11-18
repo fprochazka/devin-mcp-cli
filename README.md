@@ -1,14 +1,14 @@
 # Devin MCP CLI
 
-A command-line interface for the official [Devin MCP server](https://mcp.devin.ai/mcp), built on the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/). Each Devin MCP tool is exposed as a direct CLI command, generated at runtime from the live server.
+A command-line interface for the official [Devin MCP server](https://mcp.devin.ai/mcp), built on the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) and [mcp-to-cli-kit](https://github.com/fprochazka/mcp-to-cli-kit). Each Devin MCP tool is exposed as a direct CLI command, generated at runtime from the live server.
 
 ## Features
 
-- One CLI command per Devin MCP tool (sessions, playbooks, knowledge, schedules, repos, and whatever else the server exposes).
-- Auto-generated options from each tool's JSON input schema, with type handling.
+- One CLI command per Devin MCP tool (sessions, playbooks, knowledge, schedules, repos, and whatever else the server exposes), named in kebab case without the `devin_` prefix: `devin_session_search` is `devin-mcp session-search`. The tool's own name keeps working as an alias.
+- Options compiled from each tool's JSON input schema: `--flag` / `--no-flag` booleans, enums as choices, repeated options for arrays, `--input-json` and `--arg-file`, validated before the call.
 - Multi-account config: one file holds several named accounts, selected per command.
-- 1-hour cache for tool schemas to speed up subsequent invocations.
-- Rich terminal output with JSON pretty-printing, plus `--json` for raw machine-readable output.
+- 1-hour cache for tool schemas, so `--help` needs no server round trip.
+- Machine output under an AI agent or with `--json`, indented JSON for a person or with `--pretty`.
 
 The command set is generated from the live server, so it reflects whatever tools Devin currently exposes. Run `devin-mcp --help` for the authoritative list and `devin-mcp <command> --help` for a tool's current options.
 
@@ -77,15 +77,19 @@ mcp_server:
   sse_read_timeout: 300
 ```
 
+The kit's own settings of the Devin server go under `servers.devin` (for example `servers.devin.sse_read_timeout`). The older `mcp_server.timeout` and `mcp_server.sse_read_timeout` keep working and mean the same. The default read timeout is 660 seconds, because `session-gather` waits up to 590 seconds and `blueprint-test` up to 600 by design.
+
 ### Account commands
 
 ```bash
 devin-mcp org add <name>        # add or replace one account (merges, never wipes others)
-devin-mcp org list              # list accounts with masked keys, mark the default
+devin-mcp org list              # list accounts with masked keys, the default, and the account in use now
 devin-mcp org use <name>        # set default_org to <name>
 devin-mcp org remove <name>     # remove one account, repoint the default if needed
-devin-mcp config                # show the resolved active account + masked key + config path
+devin-mcp config                # the effective configuration as JSON, with the key masked
 ```
+
+The `org` commands never contact Devin.
 
 `org add` prompts for the `api_key` (hidden) and an optional `org_id`. It merges into the existing file, so adding a second account never removes the first. The first account added becomes the default. For non-interactive use, pass `--api-key` and `--org-id`.
 
@@ -101,15 +105,14 @@ Selection precedence, highest first:
 1. `--org` / `-o` (shares its slot with the `DEVIN_ORG` env var, so the flag wins over the env).
 2. `default_org` in the config file.
 3. The sole configured account, if exactly one exists.
-4. Environment fallback: `DEVIN_API_KEY` (and optional `DEVIN_ORG_ID`) synthesize a single account named `env`. This makes the CLI work from env vars alone, with no config file.
-5. Otherwise an error that lists the available account names.
+4. Environment fallback: `DEVIN_API_KEY` (and optional `DEVIN_ORG_ID`). This makes the CLI work from env vars alone, with no config file.
+5. Otherwise, with several accounts and none chosen, an error that lists the account names. Without any account, the command fails naming `DEVIN_API_KEY`.
 
-### Config file precedence
+An unknown `--org` or `default_org` is a configuration error (exit code 2) that lists the account names.
 
-1. `./.devin-mcp.yaml` in the current directory.
-2. `~/.config/devin-mcp/config.yaml`.
+### Config file
 
-Override the path with `--config <path>` or the `DEVIN_MCP_CONFIG` env var. The file is written with `0600` permissions because it holds plaintext secrets.
+The file is `~/.config/devin-mcp/config.yaml` (`$XDG_CONFIG_HOME/devin-mcp/config.yaml` when that is set). Override the path with `--config <path>` or the `DEVIN_MCP_CONFIG` env var. The file is written with `0600` permissions because it holds plaintext secrets.
 
 ### Environment variables
 
@@ -119,7 +122,7 @@ Override the path with `--config <path>` or the `DEVIN_MCP_CONFIG` env var. The 
 | `DEVIN_API_KEY` | Env-only single-account fallback key. |
 | `DEVIN_ORG_ID` | Optional `X-Org-Id` for the env-only account. |
 | `DEVIN_MCP_CONFIG` | Config file path (same slot as `--config`). |
-| `DEVIN_MCP_*` | MCP server timeouts via the config file (`mcp_server.timeout`, `mcp_server.sse_read_timeout`). |
+| `DEVIN_MCP_SERVERS__DEVIN__*` | Any kit setting of the Devin server, for example `DEVIN_MCP_SERVERS__DEVIN__SSE_READ_TIMEOUT`. |
 
 ## Usage
 
@@ -127,17 +130,38 @@ Override the path with `--config <path>` or the `DEVIN_MCP_CONFIG` env var. The 
 # List the live auto-generated commands
 devin-mcp --help
 
-# Show the options for one tool (live, from the server schema)
-devin-mcp devin_session_search --help
+# Show the options for one tool (from the cached server schema)
+devin-mcp session-search --help
+devin-mcp schema session-search          # the raw JSON input schema
 
-# Call a tool
-devin-mcp devin_session_search --first 10
+# Call a tool; the old name devin_session_search works too
+devin-mcp session-search --first 10
 
-# Raw JSON output
-devin-mcp devin_session_search --first 10 --json
+# The server's result exactly as sent
+devin-mcp session-search --first 10 --json
+
+# A long value from a file
+devin-mcp session-create --arg-file prompt=/path/to/prompt.md
 ```
 
-Array and object parameters are passed as JSON strings, for example `--tags '["a","b"]'`.
+Arrays take repeated options (`--tags a --tags b`) or one JSON array (`--tags '["a","b"]'`); objects take a JSON literal. An option left out is not sent, and the server applies its own default.
+
+Exit codes: 0 success, 1 the tool reported an error (its text is on stderr), 2 usage or configuration error, 3 Devin could not be reached or refused the credentials, 130 interrupted.
+
+## Changes from the previous version
+
+devin-mcp 0.2.0 runs on mcp-to-cli-kit instead of its own MCP client. Most command lines keep working; these changed:
+
+- Commands are kebab case without the `devin_` prefix (`session-search`, `ask-wiki-question`). The old names stay aliases.
+- Booleans are `--flag` / `--no-flag` instead of `--flag true`.
+- `--json` prints the server's text exactly, and several content items become one JSON array. `--pretty` indents.
+- Exit codes are 2 for usage and configuration errors and 3 for transport errors, instead of 1 for everything.
+- `config` prints the kit's JSON view of the effective configuration; the active account and the masked keys are in `org list`.
+- `init` is gone; use `org add`. The `-c` short option is gone; use `--config`.
+- `./.devin-mcp.yaml` in the current directory is no longer read; pass it with `--config`.
+- Schema defaults are no longer sent; the server applies the same defaults.
+- The default read timeout is 660 seconds instead of 300.
+- The tool cache moved from `~/.cache/devin-mcp/tools.json` to `~/.cache/devin-mcp/devin.json`; the old file can be deleted.
 
 ## Claude Code Plugin
 
@@ -163,17 +187,15 @@ Once installed, the skill auto-approves read-only commands (`config`, `org list`
 
 ## Caching
 
-Tool schemas are cached for 1 hour at `~/.cache/devin-mcp/`. Delete the cache directory to force a refresh.
+Tool schemas are cached for 1 hour in `~/.cache/devin-mcp/devin.json`, shared by all accounts. `--refresh-tools` fetches them again.
 
 ## Project Structure
 
 ```
 src/devin_mcp/
 ├── __init__.py   # Package metadata
-├── cache.py      # Tool schema caching
-├── cli.py        # CLI with dynamic command generation and account commands
-├── client.py     # MCP client with Bearer auth and optional X-Org-Id
-└── config.py     # Multi-account configuration and resolution
+├── accounts.py   # Account selection and the headers it gives the kit
+└── cli.py        # The kit configuration, the result classifier and the org commands
 
 .claude-plugin/marketplace.json                       # Claude Code plugin marketplace
 coding-agent-plugins/claude-code/                      # the plugin
